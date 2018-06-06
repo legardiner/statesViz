@@ -7,22 +7,26 @@
 		body{
 			margin: 5;
 			font-family: arial, sans;
-		}
-
-		.label{
 			font-size: 13px;
 		}
 
 		.axis text {
-			font-size: 13px;
+			font-size: 11px;
 			fill: #333;
+		}
+
+		.domain {
+			stroke: lightgrey;
+			stroke-opacity:0.7;
+			shape-rendering: crispEdges;
 		}
 
 		.axis path,
 		.axis line{
 			fill: none;
-			stroke-width: 1px;
-			stroke: #777;
+			stroke: lightgrey;
+            stroke-opacity:0.7;
+    		shape-rendering: crispEdges;
 		}
 
 		.bubble{
@@ -43,6 +47,10 @@
             pointer-events: none;
             background-color: white;
             padding: 2px;
+        }
+
+        .legendSizeAxis circle {
+        	fill: lightgrey;
         }
 
 	</style>
@@ -194,10 +202,9 @@
             .attr("x", (width / 2))             
             .attr("y", 2 - (margin.top / 2))
             .attr("text-anchor", "middle")  
-            .style("font-size", "16px")
-            .style("font-weight", "bold")
+            .style("font-size", "18px")
             .style("font-family", "sans-serif")
-            .text("State Tax Rate by Poverty Rate");
+            .text("2018 State Tax Rate by Poverty Rate");
 
 		// Add points with tooltip
 		var bubble = svg.selectAll('.bubble')
@@ -218,7 +225,7 @@
                               .style("left", d3.event.pageX - 100 + "px")
                               .style("top", d3.event.pageY - 70 + "px")
                               .style("display", "inline-block")
-                              .html('<b>' + (d.State) + '</b><br>Poverty Rate: ' + format2(d.PovertyRate) + '<br>Total Tax Rate: ' + format2(d.Taxes) + '<br>Population: ' + format1(d.Population) + '<br>Population Growth: ' + format2(d.PopulationGrowth)) ;
+                              .html('<b>' + (d.State) + '</b><br>2018 Population: ' + format1(d.Population) + '<br>Population Growth: ' + format2(d.PopulationGrowth) + '<br>2018 Poverty Rate: ' + format2(d.PovertyRate) + '<br>Total Tax Rate: ' + format2(d.Taxes)) ;
                         })
                             .on("mouseout", function(d){ tooltip.style("display", "none"); bubble.style("stroke", "none")});
 
@@ -227,13 +234,13 @@
     		.shapeWidth(30)
     		.cells(10)
     		.scale(color)
-    		.title("Population Growth")
-    		.titleWidth(50)
+    		.title("2018 Population Growth")
+    		.titleWidth(100)
     		.labelFormat(".2%")
 
     	svg.append("g")
-            .attr("class", "legend axis")
-            .attr("transform", "translate(" +  (width + 25) + " , 20)")
+            .attr("class", "legendColorAxis")
+            .attr("transform", "translate(" +  (width + 15) + " , 20)")
             .call(legendSequential);
 
         // Add bubble size legend
@@ -242,14 +249,14 @@
   			.shape('circle')
   			.shapePadding(15)
   			.labelOffset(20)
-  			.title("Population")
-    		.titleWidth(50)
+  			.title("2018 Population")
+    		.titleWidth(100)
     		.labelFormat(".1s")
     		.labelOffset(5);
 
   		svg.append("g")
-            .attr("class", "legend axis")
-            .attr("transform", "translate(" +  (width + 25) + " , 270)")
+            .attr("class", "legendSizeAxis")
+            .attr("transform", "translate(" +  (width + 15) + " , 270)")
             .call(legendSize);
 	})
 
