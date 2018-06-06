@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Scatterplot d3v4</title>
+	<style type="text/css">
+		body{
+			margin: 5;
+			font-family: arial, sans;
+		}
+
+		.label{
+			font-size: 13px;
+		}
+
+		.axis text {
+			font-size: 13px;
+			fill: #333;
+		}
+
+		.axis path,
+		.axis line{
+			fill: none;
+			stroke-width: 1px;
+			stroke: #777;
+		}
+
+		.bubble{
+			opacity: 0.8;
+			transition: opacity 0.3s;
+		}
+
+		.grid line {
+               stroke: lightgrey;
+               stroke-opacity:0.7;
+               shape-rendering: crispEdges;
+        }
+
+        .tooltip {
+            position: absolute;
+            font-size: 10px;
+            height: auto;
+            pointer-events: none;
+            background-color: white;
+            padding: 2px;
+        }
+
+	</style>
+	<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.js"></script>
+	<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+</head>
+<body>
+</body>
+<script type="text/javascript">
+	// Create dimensions for svg and for legend
+	var fullWidth = 1200
+	var fullHeight = 600
+
+	var margin = {top: 50, right: 110, bottom: 40, left:100};
+	var width = fullWidth- margin.left - margin.right;
+	var height = fullHeight - margin.top - margin.bottom;
+
+	var legendFullHeight = height;
+    var legendFullWidth = 50;
+
+	var legendMargin = { top: 20, bottom: 20, left: 5, right: 20 };
+	var legendWidth = legendFullWidth - legendMargin.left - legendMargin.right;
+    var legendHeight = legendFullHeight - legendMargin.top - legendMargin.bottom;
+
+	// Define canvas
+	var svg = d3.select('body')
+		.append('svg')
+		.attr('width', fullWidth)
+		.attr('height', fullHeight)
+	.append('g')
+		.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+	// Create scales for x, y, radius, and color
+	var xScale = d3.scaleLinear()
+		.range([0, width]);
+
+	var yScale = d3.scaleLinear()
+		.range([height, 0]);
+
+	var radius = d3.scaleLinear()
+		.range([3,25]);
+
+	var color = d3.scaleSequential(d3.interpolatePuOr);
+
+	// Define axises
+	var xAxis = d3.axisBottom()
+		.scale(xScale)
+		.tickFormat(d3.format(".0%"));
+
+	var yAxis = d3.axisLeft()
+		.scale(yScale)
+		.tickFormat(d3.format(".0%"));
+
+	// Define tool tip
+	var tooltip = d3.select("body").append("div").attr("class", "tooltip");
+
+	// Define formatters for tool tip
+	var format1 = d3.format(",");
+	var format2 = d3.format(".2%");
+
+	// gridlines in x axis function
+	function make_x_gridlines() {		
+	    return d3.axisBottom(xScale)
+	        .ticks(14)
+	}
+	
+	// gridlines in y axis function
+	function make_y_gridlines() {		
+	    return d3.axisLeft(yScale)
+	        .ticks(12)
+	}
+
+	// Load data
+	d3.csv('states.csv', function(error, data){
+		// Parse non-text data
+		data.forEach(function(d){
+			 d.Population = +d['2018 Population'];
+			 d.PopulationGrowth = parseFloat(d['2018 Growth']) / 100;
+			 d.PovertyRate = parseFloat(d['Poverty Rate']) / 100;
+			 d.Taxes = (parseFloat(d['Property Tax']) + parseFloat(d['Income Tax']) + parseFloat(d['Sales Tax'])) / 100;
+		});
+
+		// Sort data so smaller bubbles on are top
+		data.sort(function(x, y){
+   			return d3.descending(x.Population, y.Population);
+		})
+
+		// Set the domains for x, y, radius, and color by range of values in data
+		xScale.domain(d3.extent(data, function(d){
+			return d.PovertyRate;
+		})).nice();
+
+		yScale.domain(d3.extent(data, function(d){
+			return d.Taxes;
+		})).nice();
+
+		radius.domain(d3.extent(data, function(d){
+			return d.Population;
+		})).nice();
+
+		color.domain(d3.extent(data, function(d){
+			return d.PopulationGrowth;
+		})).nice();
+
+		// Add gridlines
+  		svg.append("g")			
+  		    .attr("class", "grid")
+  		    .attr("transform", "translate(0," + height + ")")
+  		    .call(make_x_gridlines()
+  		        .tickSize(-height)
+  		        .tickFormat("")
+  		    )
+		
+  		svg.append("g")			
+  		    .attr("class", "grid")
+  		    .call(make_y_gridlines()
+  		        .tickSize(-width)
+  		        .tickFormat("")
+  		    )
+
+		// Add axises
+		svg.append('g')
+			.attr('transform', 'translate(0,' + height + ')')
+			.attr('class', 'x axis')
+			.call(xAxis);
+
+		svg.append('g')
+			.attr('transform', 'translate(0,0)')
+			.attr('class', 'y axis')
+			.call(yAxis);
+
+		// Add axis labels
+		svg.append('text')
+			.attr('x', -85)
+			.attr('y', -12)
+			.attr('class', 'label')
+			.text('Total Tax Rate');
+
+		svg.append('text')
+			.attr('x', width + 5)
+			.attr('y', height + 35)
+			.attr('text-anchor', 'end')
+			.attr('class', 'label')
+			.text('Poverty Rate');
+
+		// Add plot title
+		svg.append("text")
+            .attr("x", (width / 2))             
+            .attr("y", 2 - (margin.top / 2))
+            .attr("text-anchor", "middle")  
+            .style("font-size", "16px")
+            .style("font-weight", "bold")
+            .style("font-family", "sans-serif")
+            .text("State Tax Rate by Poverty Rate");
+
+		// Add points with tooltip
+		var bubble = svg.selectAll('.bubble')
+			.data(data)
+			.enter().append('circle')
+			.attr('class', 'bubble')
+			.attr('cx', function(d){return xScale(d.PovertyRate);})
+			.attr('cy', function(d){ return yScale(d.Taxes); })
+			.attr('r', function(d){ return radius(d.Population); })
+			.style('fill', function(d){ return color(d.PopulationGrowth); })
+			.on("mousemove", function(d){
+							var State = d.State;
+ 							var matches = bubble.filter(function(d) { 
+ 							   return d.State === State;
+ 							})
+ 							.style('stroke', 'black');
+                            tooltip
+                              .style("left", d3.event.pageX - 100 + "px")
+                              .style("top", d3.event.pageY - 70 + "px")
+                              .style("display", "inline-block")
+                              .html('<b>' + (d.State) + '</b><br>Poverty Rate: ' + format2(d.PovertyRate) + '<br>Total Tax Rate: ' + format2(d.Taxes) + '<br>Population: ' + format1(d.Population) + '<br>Population Growth: ' + format2(d.PopulationGrowth)) ;
+                        })
+                            .on("mouseout", function(d){ tooltip.style("display", "none"); bubble.style("stroke", "none")});
+
+        // Add divergent color legend
+        var legendSequential = d3.legendColor()
+    		.shapeWidth(30)
+    		.cells(10)
+    		.scale(color)
+    		.title("Population Growth")
+    		.titleWidth(50)
+    		.labelFormat(".2%")
+
+    	svg.append("g")
+            .attr("class", "legend axis")
+            .attr("transform", "translate(" +  (width + 25) + " , 20)")
+            .call(legendSequential);
+
+        // Add bubble size legend
+        var legendSize = d3.legendSize()
+  			.scale(radius)
+  			.shape('circle')
+  			.shapePadding(15)
+  			.labelOffset(20)
+  			.title("Population")
+    		.titleWidth(50)
+    		.labelFormat(".1s")
+    		.labelOffset(5);
+
+  		svg.append("g")
+            .attr("class", "legend axis")
+            .attr("transform", "translate(" +  (width + 25) + " , 270)")
+            .call(legendSize);
+	})
+
+</script>
+</html>
