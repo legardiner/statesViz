@@ -91,7 +91,8 @@
 	var yScale = d3.scaleLinear()
 		.range([height, 0]);
 
-	var radius = d3.scaleLinear()
+	// Use sqrt scaling for circles so area is proportional 
+	var radius = d3.scaleSqrt()
 		.range([3,25]);
 
 	var color = d3.scaleSequential(d3.interpolatePuOr);
